@@ -1,4 +1,4 @@
-module github.com/hashicorp/go-bexpr
+module github.com/gterranova/go-bexpr
 
 go 1.14
 
