@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/hashicorp/go-bexpr/grammar"
+	"github.com/gterranova/go-bexpr/grammar"
 )
 
 func main() {

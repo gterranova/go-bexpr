@@ -12,7 +12,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/hashicorp/go-bexpr/grammar"
+	"github.com/gterranova/go-bexpr/grammar"
 	"github.com/mitchellh/pointerstructure"
 )
 

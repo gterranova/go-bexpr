@@ -6,7 +6,7 @@ package main
 import (
 	"fmt"
 
-	bexpr "github.com/hashicorp/go-bexpr"
+	bexpr "github.com/gterranova/go-bexpr"
 )
 
 type Internal struct {

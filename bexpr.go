@@ -11,7 +11,7 @@ package bexpr
 //go:generate goimports -w grammar/grammar.go
 
 import (
-	"github.com/hashicorp/go-bexpr/grammar"
+	"github.com/gterranova/go-bexpr/grammar"
 	"github.com/mitchellh/pointerstructure"
 )
 
