@@ -59,6 +59,6 @@ func (eval *Evaluator) Evaluate(datum interface{}) (bool, error) {
 	if eval.unknownVal != nil {
 		opts = append(opts, WithUnknownValue(*eval.unknownVal))
 	}
-
-	return evaluate(eval.ast, datum, opts...)
+	result, err := evaluate(eval.ast, datum, opts...)
+	return result.(bool), err
 }

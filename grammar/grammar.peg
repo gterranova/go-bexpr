@@ -50,7 +50,9 @@ NotExpression <- "not" _ expr:NotExpression {
    return expr, nil
 }
 
-ParenthesizedExpression "grouping" <- "(" _? expr:OrExpression _? ")" {
+ParenthesizedExpression "grouping" <- "(" _? expr:ExpressionValue _? ")" {
+   return expr, nil
+} / "(" _? expr:OrExpression _? ")" {
    return expr, nil
 } / expr:MatchExpression {
    return expr, nil
@@ -60,18 +62,54 @@ ParenthesizedExpression "grouping" <- "(" _? expr:OrExpression _? ")" {
 
 MatchExpression "match" <- MatchSelectorOpValue / MatchSelectorOp / MatchValueOpSelector
 
-MatchSelectorOpValue "match" <- selector:Selector operator:(MatchEqual / MatchNotEqual / MatchContains / MatchNotContains / MatchMatches / MatchNotMatches) value:Value {
-   return &MatchExpression{Selector: selector.(Selector), Operator: operator.(MatchOperator), Value: value.(*MatchValue)}, nil
+MatchSelectorOpValue "match" <- left:ExpressionValue operator:(MatchLowerOrEqual / MatchHigherOrEqual / MatchLower / MatchHigher / MatchEqual / MatchNotEqual / MatchContains / MatchNotContains / MatchMatches / MatchNotMatches) right:ExpressionValue {
+   return &MatchExpression{Left: left.(*ExpressionValue), Operator: operator.(MatchOperator), Right: right.(*ExpressionValue)}, nil
 }
 
-MatchSelectorOp "match" <- selector:Selector operator:(MatchIsEmpty / MatchIsNotEmpty) {
-   return &MatchExpression{Selector: selector.(Selector), Operator: operator.(MatchOperator), Value: nil}, nil
+MatchSelectorOp "match" <- left:Value operator:(MatchIsEmpty / MatchIsNotEmpty) {
+   return &MatchExpression{
+      Left: &ExpressionValue{
+         Operator: MathOpValue,
+         Left: left.(*MatchValue),
+         Right: nil,
+      }, 
+      Operator: operator.(MatchOperator), 
+      Right: nil,
+   }, nil
 }
 
-MatchValueOpSelector "match" <- value:Value operator:(MatchIn / MatchNotIn) selector:Selector {
-   return &MatchExpression{Selector: selector.(Selector), Operator: operator.(MatchOperator), Value: value.(*MatchValue)}, nil
+MatchValueOpSelector "match" <- value:Value operator:(MatchIn / MatchNotIn) selector:Value {
+   return &MatchExpression{
+      Left: &ExpressionValue{
+         Operator: MathOpValue,
+         Left: selector.(*MatchValue),
+         Right: nil,
+      }, 
+      Operator: operator.(MatchOperator), 
+      Right: &ExpressionValue{
+         Operator: MathOpValue,
+         Left: value.(*MatchValue),
+         Right: nil,
+      }, 
+   }, nil
 } / Value operator:(MatchIn / MatchNotIn) !Selector &{
    return false, errors.New("Invalid selector")
+}
+
+MatchLowerOrEqual <- _? "<=" _? {
+   return MatchLowerOrEqual, nil
+}
+
+MatchLower <- _? "<" _? {
+   return MatchLower, nil
+}
+
+MatchHigherOrEqual <- _? ">=" _? {
+   return MatchHigherOrEqual, nil
+}
+
+MatchHigher <- _? ">" _? {
+   return MatchHigher, nil
 }
 
 MatchEqual <- _? "==" _? {
@@ -161,23 +199,77 @@ IndexExpression "index" <- "[" _? lit:StringLiteral _? "]" {
    return false, errors.New("Unclosed index expression")
 }
 
-Value "value" <- selector:Selector {
-   return &MatchValue{Raw:selector.(Selector).String()}, nil
-} / n:NumberLiteral {
-   return &MatchValue{Raw: n.(string)}, nil
-} / s:StringLiteral {
-   return &MatchValue{Raw: s.(string)}, nil
+ExpressionValue <- left:Value operator:(MathOpPlus / MathOpMinus / MathOpMul / MathOpDiv) right:Value {
+   return &ExpressionValue{
+      Operator: operator.(MathOperator),
+      Left: left,
+      Right: right,
+   }, nil
+} / value:Value {
+   return &ExpressionValue{
+      Operator: MathOpValue,
+      Left: value,
+      Right: nil,
+   }, nil
 }
 
-NumberLiteral "number" <- "-"? IntegerOrFloat &AfterNumbers {
-   return string(c.text), nil
-} / "-"? IntegerOrFloat !AfterNumbers &{
+MathOpPlus <- _? "+" _? {
+   return MathOpPlus, nil
+}
+
+MathOpMinus <- _? "-" _? {
+   return MathOpMinus, nil
+}
+
+MathOpMul <- _? "*" _? {
+   return MathOpMul, nil
+}
+
+MathOpDiv <- _? "/" _? {
+   return MathOpDiv, nil
+}
+
+Value "value" <- b:TrueOrFalse {
+   return &MatchValue{Type: ValueTypeBool, Raw: b.(string)}, nil
+} / u:Undefined {
+   return &MatchValue{Type: ValueTypeUndefined, Raw: u.(string)}, nil
+} / selector:Selector {
+   return &MatchValue{Selector:selector.(Selector), Type: ValueTypeReflect /*, Raw:selector.(Selector).String()*/}, nil
+} / n:Float &AfterNumbers {
+   return &MatchValue{Type: ValueTypeFloat64, Raw: n.(string)}, nil
+} / n:Integer &AfterNumbers {
+   return &MatchValue{Type: ValueTypeInt, Raw: n.(string)}, nil
+} / n:Float !AfterNumbers {
    return false, errors.New("Invalid number literal")
+} / n:Integer !AfterNumbers {
+   return false, errors.New("Invalid number literal")
+} / n:TrueOrFalse !AfterNumbers {
+   return false, errors.New("Invalid bool literal")
+} / s:StringLiteral {
+   return &MatchValue{Type: ValueTypeString, Raw: s.(string)}, nil
+}
+
+Undefined "undefined" <- "undefined" &AfterNumbers {
+   return string(c.text), nil
+} / "undefined" !AfterNumbers &{
+   return false, errors.New("Invalid undefined literal")
+}
+
+TrueOrFalse "bool" <- ("true" / "false") &AfterNumbers {
+   return string(c.text), nil
+} / ("true" / "false") !AfterNumbers &{
+   return false, errors.New("Invalid bool literal")
 }
 
 AfterNumbers <- &(_ / EOF / ")")
 
-IntegerOrFloat <- ("0" / [1-9][0-9]*) ("." [0-9]+)?
+Float <- "-"? ("0" / [1-9][0-9]*) ("." [0-9]+) {
+   return string(c.text), nil
+}
+
+Integer <- "-"? ("0" / [1-9][0-9]*) {
+   return string(c.text), nil
+}
 
 StringLiteral "string" <- ('`' RawStringChar* '`' / '"' DoubleStringChar* '"') {
   return strconv.Unquote(string(c.text))

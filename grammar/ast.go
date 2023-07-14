@@ -48,6 +48,33 @@ func (op BinaryOperator) String() string {
 	}
 }
 
+type MathOperator int
+
+const (
+	MathOpValue MathOperator = iota
+	MathOpPlus
+	MathOpMinus
+	MathOpMul
+	MathOpDiv
+)
+
+func (op MathOperator) String() string {
+	switch op {
+	case MathOpValue:
+		return "="
+	case MathOpPlus:
+		return "+"
+	case MathOpMinus:
+		return "-"
+	case MathOpMul:
+		return "*"
+	case MathOpDiv:
+		return "/"
+	default:
+		return "UNKNOWN"
+	}
+}
+
 type MatchOperator int
 
 const (
@@ -59,6 +86,10 @@ const (
 	MatchIsNotEmpty
 	MatchMatches
 	MatchNotMatches
+	MatchLower
+	MatchLowerOrEqual
+	MatchHigher
+	MatchHigherOrEqual
 )
 
 func (op MatchOperator) String() string {
@@ -79,6 +110,14 @@ func (op MatchOperator) String() string {
 		return "Matches"
 	case MatchNotMatches:
 		return "Not Matches"
+	case MatchLower:
+		return "Lower"
+	case MatchHigher:
+		return "Higher"
+	case MatchLowerOrEqual:
+		return "Lower or Equal"
+	case MatchHigherOrEqual:
+		return "Higher or Equal"
 	default:
 		return "UNKNOWN"
 	}
@@ -113,6 +152,18 @@ func (op MatchOperator) NotPresentDisposition() bool {
 	case MatchNotMatches:
 		// M["x"] not matches <anything> is true. Nothing matches a missing key
 		return true
+	case MatchLower:
+		// ...M["x"] < <anything> is false. Nothing is higher than a missing key
+		return true
+	case MatchHigher:
+		// ...M["x"] > <anything> is false. Nothing is higher than a missing key
+		return false
+	case MatchLowerOrEqual:
+		// ...M["x"] <= <anything> is false. Nothing is higher than a missing key
+		return true
+	case MatchHigherOrEqual:
+		// ...M["x"] => <anything> is false. Nothing is higher than a missing key
+		return false
 	default:
 		// Should never be reached as every operator should explicitly define its
 		// behavior.
@@ -121,6 +172,8 @@ func (op MatchOperator) NotPresentDisposition() bool {
 }
 
 type MatchValue struct {
+	Selector  Selector
+	Type      ValueType
 	Raw       string
 	Converted interface{}
 }
@@ -136,12 +189,31 @@ type BinaryExpression struct {
 	Right    Expression
 }
 
+type ExpressionValue struct {
+	Left     interface{} // *MatchValue or *EExpressionValue
+	Operator MathOperator
+	Right    interface{} // *MatchValue or *EExpressionValue
+}
+
 type SelectorType uint32
 
 const (
 	SelectorTypeUnknown = iota
 	SelectorTypeBexpr
 	SelectorTypeJsonPointer
+)
+
+type ValueType uint32
+
+const (
+	ValueTypeUndefined = iota
+	ValueTypeBool
+	ValueTypeInt
+	ValueTypeUint
+	ValueTypeFloat32
+	ValueTypeFloat64
+	ValueTypeString
+	ValueTypeReflect
 )
 
 type Selector struct {
@@ -164,9 +236,9 @@ func (sel Selector) String() string {
 }
 
 type MatchExpression struct {
-	Selector Selector
 	Operator MatchOperator
-	Value    *MatchValue
+	Left     *ExpressionValue
+	Right    *ExpressionValue
 }
 
 func (expr *UnaryExpression) ExpressionDump(w io.Writer, indent string, level int) {
@@ -184,11 +256,16 @@ func (expr *BinaryExpression) ExpressionDump(w io.Writer, indent string, level i
 	fmt.Fprintf(w, "%s}\n", localIndent)
 }
 
+func (expr *ExpressionValue) ExpressionDump(w io.Writer, indent string, level int) {
+	localIndent := strings.Repeat(indent, level)
+	fmt.Fprintf(w, "%s%s %v %v\n", localIndent, expr.Left, expr.Operator.String(), expr.Right)
+}
+
 func (expr *MatchExpression) ExpressionDump(w io.Writer, indent string, level int) {
 	switch expr.Operator {
-	case MatchEqual, MatchNotEqual, MatchIn, MatchNotIn:
-		fmt.Fprintf(w, "%[1]s%[3]s {\n%[2]sSelector: %[4]v\n%[2]sValue: %[5]q\n%[1]s}\n", strings.Repeat(indent, level), strings.Repeat(indent, level+1), expr.Operator.String(), expr.Selector, expr.Value.Raw)
+	case MatchEqual, MatchNotEqual, MatchIn, MatchNotIn, MatchLower, MatchHigher, MatchLowerOrEqual, MatchHigherOrEqual:
+		fmt.Fprintf(w, "%[1]s%[3]s {\n%[2]sSelector: %[4]v\n%[2]sValue: %[5]q\n%[1]s}\n", strings.Repeat(indent, level), strings.Repeat(indent, level+1), expr.Operator.String(), expr.Left.Left, expr.Right.Right)
 	default:
-		fmt.Fprintf(w, "%[1]s%[3]s {\n%[2]sSelector: %[4]v\n%[1]s}\n", strings.Repeat(indent, level), strings.Repeat(indent, level+1), expr.Operator.String(), expr.Selector)
+		fmt.Fprintf(w, "%[1]s%[3]s {\n%[2]sSelector: %[4]v\n%[1]s}\n", strings.Repeat(indent, level), strings.Repeat(indent, level+1), expr.Operator.String(), expr.Left.Left)
 	}
 }

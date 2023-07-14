@@ -20,17 +20,17 @@ func TestExpressionParsing(t *testing.T) {
 	tests := map[string]testCase{
 		"Match Equality": {
 			input:    "foo == 3",
-			expected: &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}, Operator: MatchEqual, Value: &MatchValue{Raw: "3"}},
+			expected: &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}}, Operator: MatchEqual, Right: &MatchValue{Type: ValueTypeInt, Raw: "3"}},
 			err:      "",
 		},
 		"Match Equality, JSON Pointer": {
 			input:    `"/foo" == 3`,
-			expected: &MatchExpression{Selector: Selector{Type: SelectorTypeJsonPointer, Path: []string{"foo"}}, Operator: MatchEqual, Value: &MatchValue{Raw: "3"}},
+			expected: &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeJsonPointer, Path: []string{"foo"}}}, Operator: MatchEqual, Right: &MatchValue{Type: ValueTypeInt, Raw: "3"}},
 			err:      "",
 		},
 		"Match Equality, JSON Pointer, with punctuation": {
 			input:    `"/hy-phen/under_score/pi|pe/do.t/ti~lde/co:lon" == 3`,
-			expected: &MatchExpression{Selector: Selector{Type: SelectorTypeJsonPointer, Path: []string{"hy-phen", "under_score", "pi|pe", "do.t", "ti~lde", "co:lon"}}, Operator: MatchEqual, Value: &MatchValue{Raw: "3"}},
+			expected: &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeJsonPointer, Path: []string{"hy-phen", "under_score", "pi|pe", "do.t", "ti~lde", "co:lon"}}}, Operator: MatchEqual, Right: &MatchValue{Type: ValueTypeInt, Raw: "3"}},
 			err:      "",
 		},
 		"Match Equality, JSON Pointer, with punctuation, trailing slash": {
@@ -40,59 +40,59 @@ func TestExpressionParsing(t *testing.T) {
 		},
 		"Match Equality with forward slash in identifier": {
 			input:    "foo/bar == 3",
-			expected: &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo/bar"}}, Operator: MatchEqual, Value: &MatchValue{Raw: "3"}},
+			expected: &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo/bar"}}}, Operator: MatchEqual, Right: &MatchValue{Type: ValueTypeInt, Raw: "3"}},
 			err:      "",
 		},
 		"Match Inequality": {
-			input:    "foo != xyz",
-			expected: &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}, Operator: MatchNotEqual, Value: &MatchValue{Raw: "xyz"}},
+			input:    "foo != \"xyz\"",
+			expected: &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}}, Operator: MatchNotEqual, Right: &MatchValue{Type: ValueTypeString, Raw: "xyz"}},
 			err:      "",
 		},
 		"Match Is Empty": {
 			input:    "list is empty",
-			expected: &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"list"}}, Operator: MatchIsEmpty, Value: nil},
+			expected: &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"list"}}}, Operator: MatchIsEmpty, Right: nil},
 			err:      "",
 		},
 		"Match Is Not Empty": {
 			input:    "list is not empty",
-			expected: &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"list"}}, Operator: MatchIsNotEmpty, Value: nil},
+			expected: &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"list"}}}, Operator: MatchIsNotEmpty, Right: nil},
 			err:      "",
 		},
 		"Match In": {
-			input:    "foo in bar",
-			expected: &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"bar"}}, Operator: MatchIn, Value: &MatchValue{Raw: "foo"}},
+			input:    "\"foo\" in bar",
+			expected: &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"bar"}}}, Operator: MatchIn, Right: &MatchValue{Type: ValueTypeString, Raw: "foo"}},
 			err:      "",
 		},
 		"Match Not In": {
-			input:    "foo not in bar",
-			expected: &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"bar"}}, Operator: MatchNotIn, Value: &MatchValue{Raw: "foo"}},
+			input:    "\"foo\" not in bar",
+			expected: &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"bar"}}}, Operator: MatchNotIn, Right: &MatchValue{Type: ValueTypeString, Raw: "foo"}},
 			err:      "",
 		},
 		"Match Contains": {
-			input:    "bar contains foo",
-			expected: &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"bar"}}, Operator: MatchIn, Value: &MatchValue{Raw: "foo"}},
+			input:    "bar contains \"foo\"",
+			expected: &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"bar"}}}, Operator: MatchIn, Right: &MatchValue{Type: ValueTypeString, Raw: "foo"}},
 			err:      "",
 		},
 		"Match Not Contains": {
-			input:    "bar not contains foo",
-			expected: &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"bar"}}, Operator: MatchNotIn, Value: &MatchValue{Raw: "foo"}},
+			input:    "bar not contains \"foo\"",
+			expected: &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"bar"}}}, Operator: MatchNotIn, Right: &MatchValue{Type: ValueTypeString, Raw: "foo"}},
 			err:      "",
 		},
 		"Match Matches": {
-			input:    "foo matches bar",
-			expected: &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}, Operator: MatchMatches, Value: &MatchValue{Raw: "bar"}},
+			input:    "foo matches \"bar\"",
+			expected: &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}}, Operator: MatchMatches, Right: &MatchValue{Type: ValueTypeString, Raw: "bar"}},
 			err:      "",
 		},
 		"Match Not Matches": {
-			input:    "foo not matches bar",
-			expected: &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}, Operator: MatchNotMatches, Value: &MatchValue{Raw: "bar"}},
+			input:    "foo not matches \"bar\"",
+			expected: &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}}, Operator: MatchNotMatches, Right: &MatchValue{Type: ValueTypeString, Raw: "bar"}},
 			err:      "",
 		},
 		"Logical Not": {
-			input: "not prod in tags",
+			input: "not \"prod\" in tags",
 			expected: &UnaryExpression{
 				Operator: UnaryOpNot,
-				Operand:  &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"tags"}}, Operator: MatchIn, Value: &MatchValue{Raw: "prod"}},
+				Operand:  &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"tags"}}}, Operator: MatchIn, Right: &MatchValue{Type: ValueTypeString, Raw: "prod"}},
 			},
 			err: "",
 		},
@@ -100,8 +100,8 @@ func TestExpressionParsing(t *testing.T) {
 			input: "port != 80 and port != 8080",
 			expected: &BinaryExpression{
 				Operator: BinaryOpAnd,
-				Left:     &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"port"}}, Operator: MatchNotEqual, Value: &MatchValue{Raw: "80"}},
-				Right:    &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"port"}}, Operator: MatchNotEqual, Value: &MatchValue{Raw: "8080"}},
+				Left:     &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"port"}}}, Operator: MatchNotEqual, Right: &MatchValue{Type: ValueTypeInt, Raw: "80"}},
+				Right:    &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"port"}}}, Operator: MatchNotEqual, Right: &MatchValue{Type: ValueTypeInt, Raw: "8080"}},
 			},
 			err: "",
 		},
@@ -109,49 +109,49 @@ func TestExpressionParsing(t *testing.T) {
 			input: "port == 80 or port == 443",
 			expected: &BinaryExpression{
 				Operator: BinaryOpOr,
-				Left:     &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"port"}}, Operator: MatchEqual, Value: &MatchValue{Raw: "80"}},
-				Right:    &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"port"}}, Operator: MatchEqual, Value: &MatchValue{Raw: "443"}},
+				Left:     &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"port"}}}, Operator: MatchEqual, Right: &MatchValue{Type: ValueTypeInt, Raw: "80"}},
+				Right:    &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"port"}}}, Operator: MatchEqual, Right: &MatchValue{Type: ValueTypeInt, Raw: "443"}},
 			},
 			err: "",
 		},
 		"Double Quoted Value (Equal)": {
 			input:    "foo == \"bar\"",
-			expected: &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}, Operator: MatchEqual, Value: &MatchValue{Raw: "bar"}},
+			expected: &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}}, Operator: MatchEqual, Right: &MatchValue{Type: ValueTypeString, Raw: "bar"}},
 			err:      "",
 		},
 		"Double Quoted Value (Not Equal)": {
 			input:    "foo != \"bar\"",
-			expected: &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}, Operator: MatchNotEqual, Value: &MatchValue{Raw: "bar"}},
+			expected: &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}}, Operator: MatchNotEqual, Right: &MatchValue{Type: ValueTypeString, Raw: "bar"}},
 			err:      "",
 		},
 		"Double Quoted Value (In)": {
 			input:    "\"foo\" in bar",
-			expected: &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"bar"}}, Operator: MatchIn, Value: &MatchValue{Raw: "foo"}},
+			expected: &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"bar"}}}, Operator: MatchIn, Right: &MatchValue{Type: ValueTypeString, Raw: "foo"}},
 			err:      "",
 		},
 		"Double Quoted Value (Not In)": {
 			input:    "\"foo\" not in bar",
-			expected: &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"bar"}}, Operator: MatchNotIn, Value: &MatchValue{Raw: "foo"}},
+			expected: &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"bar"}}}, Operator: MatchNotIn, Right: &MatchValue{Type: ValueTypeString, Raw: "foo"}},
 			err:      "",
 		},
 		"Backtick Quoted Value (Equal)": {
 			input:    "foo == `bar`",
-			expected: &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}, Operator: MatchEqual, Value: &MatchValue{Raw: "bar"}},
+			expected: &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}}, Operator: MatchEqual, Right: &MatchValue{Type: ValueTypeString, Raw: "bar"}},
 			err:      "",
 		},
 		"Backtick Quoted Value (Not Equal)": {
 			input:    "foo != `bar`",
-			expected: &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}, Operator: MatchNotEqual, Value: &MatchValue{Raw: "bar"}},
+			expected: &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}}, Operator: MatchNotEqual, Right: &MatchValue{Type: ValueTypeString, Raw: "bar"}},
 			err:      "",
 		},
 		"Backtick Quoted Value (In)": {
 			input:    "`foo` in bar",
-			expected: &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"bar"}}, Operator: MatchIn, Value: &MatchValue{Raw: "foo"}},
+			expected: &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"bar"}}}, Operator: MatchIn, Right: &MatchValue{Type: ValueTypeString, Raw: "foo"}},
 			err:      "",
 		},
 		"Backtick Quoted Value (Not In)": {
 			input:    "`foo` not in bar",
-			expected: &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"bar"}}, Operator: MatchNotIn, Value: &MatchValue{Raw: "foo"}},
+			expected: &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"bar"}}}, Operator: MatchNotIn, Right: &MatchValue{Type: ValueTypeString, Raw: "foo"}},
 			err:      "",
 		},
 		// This is standard boolean expression precedence
@@ -160,18 +160,18 @@ func TestExpressionParsing(t *testing.T) {
 		// 2 - and
 		// 3 - or
 		"Logical Operator Precedence": {
-			input: "x in foo and not str == something or list is empty",
+			input: "\"x\" in foo and not str == \"something\" or list is empty",
 			expected: &BinaryExpression{
 				Operator: BinaryOpOr,
 				Left: &BinaryExpression{
 					Operator: BinaryOpAnd,
-					Left:     &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}, Operator: MatchIn, Value: &MatchValue{Raw: "x"}},
+					Left:     &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}}, Operator: MatchIn, Right: &MatchValue{Type: ValueTypeString, Raw: "x"}},
 					Right: &UnaryExpression{
 						Operator: UnaryOpNot,
-						Operand:  &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"str"}}, Operator: MatchEqual, Value: &MatchValue{Raw: "something"}},
+						Operand:  &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"str"}}}, Operator: MatchEqual, Right: &MatchValue{Type: ValueTypeString, Raw: "something"}},
 					},
 				},
-				Right: &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"list"}}, Operator: MatchIsEmpty, Value: nil},
+				Right: &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"list"}}}, Operator: MatchIsEmpty, Right: nil},
 			},
 			err: "",
 		},
@@ -181,107 +181,107 @@ func TestExpressionParsing(t *testing.T) {
 		// or operators normal are the last to be applied but here they
 		// happen earlier
 		"Logical Operator Precedence (Parenthesized)": {
-			input: "x in foo and not (str == something or list is empty)",
+			input: "\"x\" in foo and not (str == \"something\" or list is empty)",
 			expected: &BinaryExpression{
 				Operator: BinaryOpAnd,
-				Left:     &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}, Operator: MatchIn, Value: &MatchValue{Raw: "x"}},
+				Left:     &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}}, Operator: MatchIn, Right: &MatchValue{Type: ValueTypeString, Raw: "x"}},
 				Right: &UnaryExpression{
 					Operator: UnaryOpNot,
 					Operand: &BinaryExpression{
 						Operator: BinaryOpOr,
-						Left:     &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"str"}}, Operator: MatchEqual, Value: &MatchValue{Raw: "something"}},
-						Right:    &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"list"}}, Operator: MatchIsEmpty, Value: nil},
+						Left:     &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"str"}}}, Operator: MatchEqual, Right: &MatchValue{Type: ValueTypeString, Raw: "something"}},
+						Right:    &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"list"}}}, Operator: MatchIsEmpty, Right: nil},
 					},
 				},
 			},
 			err: "",
 		},
 		"Extra Whitespace (Equal)": {
-			input:    "\t\r\n  foo \t\r\n == \t\r\n x \t\r\n",
-			expected: &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}, Operator: MatchEqual, Value: &MatchValue{Raw: "x"}},
+			input:    "\t\r\n  foo \t\r\n == \t\r\n \"x\" \t\r\n",
+			expected: &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}}, Operator: MatchEqual, Right: &MatchValue{Type: ValueTypeString, Raw: "x"}},
 			err:      "",
 		},
 		"Extra Whitespace (Not Equal)": {
-			input:    "\t\r\n  foo \t\r\n != \t\r\n x \t\r\n",
-			expected: &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}, Operator: MatchNotEqual, Value: &MatchValue{Raw: "x"}},
+			input:    "\t\r\n  foo \t\r\n != \t\r\n \"x\" \t\r\n",
+			expected: &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}}, Operator: MatchNotEqual, Right: &MatchValue{Type: ValueTypeString, Raw: "x"}},
 			err:      "",
 		},
 		"Extra Whitespace (In)": {
-			input:    "\t\r\n  foo \t\r\n in \t\r\n x \t\r\n",
-			expected: &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"x"}}, Operator: MatchIn, Value: &MatchValue{Raw: "foo"}},
+			input:    "\t\r\n  \"foo\" \t\r\n in \t\r\n x \t\r\n",
+			expected: &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"x"}}}, Operator: MatchIn, Right: &MatchValue{Type: ValueTypeString, Raw: "foo"}},
 			err:      "",
 		},
 		"Extra Whitespace (Not In)": {
-			input:    "\t\r\n  foo \t\r\n not \t\r\n in \t\r\n x \t\r\n",
-			expected: &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"x"}}, Operator: MatchNotIn, Value: &MatchValue{Raw: "foo"}},
+			input:    "\t\r\n  \"foo\" \t\r\n not \t\r\n in \t\r\n x \t\r\n",
+			expected: &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"x"}}}, Operator: MatchNotIn, Right: &MatchValue{Type: ValueTypeString, Raw: "foo"}},
 			err:      "",
 		},
 		"Extra Whitespace (Is Empty)": {
 			input:    "\t\r\n  foo \t\r\n is \t\r\n empty \t\r\n",
-			expected: &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}, Operator: MatchIsEmpty, Value: nil},
+			expected: &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}}, Operator: MatchIsEmpty, Right: nil},
 			err:      "",
 		},
 		"Extra Whitespace (Is Not Empty)": {
 			input:    "\t\r\n  foo \t\r\n is \t\r\n not \t\r\n empty \t\r\n",
-			expected: &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}, Operator: MatchIsNotEmpty, Value: nil},
+			expected: &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}}, Operator: MatchIsNotEmpty, Right: nil},
 			err:      "",
 		},
 		"Extra Whitespace (Not)": {
-			input: "\t\r\n not \t\r\n  foo \t\r\n in \t\r\n x \t\r\n",
+			input: "\t\r\n not \t\r\n  \"foo\" \t\r\n in \t\r\n x \t\r\n",
 			expected: &UnaryExpression{
 				Operator: UnaryOpNot,
-				Operand:  &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"x"}}, Operator: MatchIn, Value: &MatchValue{Raw: "foo"}},
+				Operand:  &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"x"}}}, Operator: MatchIn, Right: &MatchValue{Type: ValueTypeString, Raw: "foo"}},
 			},
 			err: "",
 		},
 		"Extra Whitespace (And)": {
-			input: "\t\r\n foo \t\r\n == \t\r\n x \t\r\n and \t\r\n y \t\r\n is \t\r\n empty \t\r\n",
+			input: "\t\r\n foo \t\r\n == \t\r\n \"x\" \t\r\n and \t\r\n y \t\r\n is \t\r\n empty \t\r\n",
 			expected: &BinaryExpression{
 				Operator: BinaryOpAnd,
-				Left:     &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}, Operator: MatchEqual, Value: &MatchValue{Raw: "x"}},
-				Right:    &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"y"}}, Operator: MatchIsEmpty, Value: nil},
+				Left:     &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}}, Operator: MatchEqual, Right: &MatchValue{Type: ValueTypeString, Raw: "x"}},
+				Right:    &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"y"}}}, Operator: MatchIsEmpty, Right: nil},
 			},
 			err: "",
 		},
 		"Extra Whitespace (Or)": {
-			input: "\t\r\n foo \t\r\n == \t\r\n x \t\r\n or \t\r\n y \t\r\n is \t\r\n empty \t\r\n",
+			input: "\t\r\n foo \t\r\n == \t\r\n \"x\" \t\r\n or \t\r\n y \t\r\n is \t\r\n empty \t\r\n",
 			expected: &BinaryExpression{
 				Operator: BinaryOpOr,
-				Left:     &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}, Operator: MatchEqual, Value: &MatchValue{Raw: "x"}},
-				Right:    &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"y"}}, Operator: MatchIsEmpty, Value: nil},
+				Left:     &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}}, Operator: MatchEqual, Right: &MatchValue{Type: ValueTypeString, Raw: "x"}},
+				Right:    &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"y"}}}, Operator: MatchIsEmpty, Right: nil},
 			},
 			err: "",
 		},
 		"Extra Whitespace (Parentheses)": {
-			input:    "\t\r\n ( \t\r\n foo \t\r\n == \t\r\n x \t\r\n ) \t\r\n",
-			expected: &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}, Operator: MatchEqual, Value: &MatchValue{Raw: "x"}},
+			input:    "\t\r\n ( \t\r\n foo \t\r\n == \t\r\n \"x\" \t\r\n ) \t\r\n",
+			expected: &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}}, Operator: MatchEqual, Right: &MatchValue{Type: ValueTypeString, Raw: "x"}},
 			err:      "",
 		},
 		"Selector Path": {
 			input:    "`environment` in foo.bar[\"meta\"].tags[\t`ENV` ]",
-			expected: &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo", "bar", "meta", "tags", "ENV"}}, Operator: MatchIn, Value: &MatchValue{Raw: "environment"}},
+			expected: &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo", "bar", "meta", "tags", "ENV"}}}, Operator: MatchIn, Right: &MatchValue{Type: ValueTypeString, Raw: "environment"}},
 			err:      "",
 		},
 		"Selector Path, JSON Pointer": {
-			input:    `environment in "/hy-phen/under_score/pi|pe/do.t/ti~lde"`,
-			expected: &MatchExpression{Selector: Selector{Type: SelectorTypeJsonPointer, Path: []string{"hy-phen", "under_score", "pi|pe", "do.t", "ti~lde"}}, Operator: MatchIn, Value: &MatchValue{Raw: "environment"}},
+			input:    `\"environment\" in "/hy-phen/under_score/pi|pe/do.t/ti~lde"`,
+			expected: &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeJsonPointer, Path: []string{"hy-phen", "under_score", "pi|pe", "do.t", "ti~lde"}}}, Operator: MatchIn, Right: &MatchValue{Type: ValueTypeString, Raw: "environment"}},
 			err:      "",
 		},
 		"Selector All Indexes": {
-			input:    `environment in foo["bar"]["meta"]["tags"]["ENV"]`,
-			expected: &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo", "bar", "meta", "tags", "ENV"}}, Operator: MatchIn, Value: &MatchValue{Raw: "environment"}},
+			input:    `\"environment\" in foo["bar"]["meta"]["tags"]["ENV"]`,
+			expected: &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo", "bar", "meta", "tags", "ENV"}}}, Operator: MatchIn, Right: &MatchValue{Type: ValueTypeString, Raw: "environment"}},
 			err:      "",
 		},
 		"Selector All Dotted": {
-			input:    "environment in foo.bar.meta.tags.ENV",
-			expected: &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo", "bar", "meta", "tags", "ENV"}}, Operator: MatchIn, Value: &MatchValue{Raw: "environment"}},
+			input:    "\"environment\" in foo.bar.meta.tags.ENV",
+			expected: &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo", "bar", "meta", "tags", "ENV"}}}, Operator: MatchIn, Right: &MatchValue{Type: ValueTypeString, Raw: "environment"}},
 			err:      "",
 		},
 		// selectors can contain almost any character set when index expressions are used
 		// This includes whitespace, hyphens, unicode, etc.
 		"Selector Index Chars": {
-			input:    "environment in foo[\"abc-def ghi åß∂ƒ\"]",
-			expected: &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo", "abc-def ghi åß∂ƒ"}}, Operator: MatchIn, Value: &MatchValue{Raw: "environment"}},
+			input:    "\"environment\" in foo[\"abc-def ghi åß∂ƒ\"]",
+			expected: &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo", "abc-def ghi åß∂ƒ"}}}, Operator: MatchIn, Right: &MatchValue{Type: ValueTypeString, Raw: "environment"}},
 			err:      "",
 		},
 		"Unterminated String Literal 1": {
@@ -300,7 +300,7 @@ func TestExpressionParsing(t *testing.T) {
 			err:      "1:9 (8): rule \"number\": Invalid number literal",
 		},
 		"Invalid Index Key": {
-			input:    "foo[3] == abc",
+			input:    "foo[3] == \"abc\"",
 			expected: nil,
 			err:      "1:5 (4): rule \"index\": Invalid index",
 		},
@@ -337,31 +337,31 @@ func TestExpressionParsing(t *testing.T) {
 		"Junk at the end 2": {
 			input:    "x in foo and ",
 			expected: nil,
-			err:      "1:14 (13): no match found, expected: \"(\", \"-\", \"0\", \"\\\"\", \"`\", \"not\", [ \\t\\r\\n], [1-9] or [a-zA-Z]",
+			err:      "1:14 (13): no match found, expected: \"(\", \"-\", \"0\", \"\\\"\", \"`\", \"false\", \"not\", \"true\", [ \\t\\r\\n], [1-9] or [a-zA-Z]",
 		},
 		"Junk at the end 3": {
 			input:    "x in foo or ",
 			expected: nil,
-			err:      "1:13 (12): no match found, expected: \"(\", \"-\", \"0\", \"\\\"\", \"`\", \"not\", [ \\t\\r\\n], [1-9] or [a-zA-Z]",
+			err:      "1:13 (12): no match found, expected: \"(\", \"-\", \"0\", \"\\\"\", \"`\", \"false\", \"not\", \"true\", [ \\t\\r\\n], [1-9] or [a-zA-Z]",
 		},
 		"Junk at the end 4": {
 			input:    "x in foo or not ",
 			expected: nil,
-			err:      "1:17 (16): no match found, expected: \"!=\", \"(\", \"-\", \"0\", \"==\", \"\\\"\", \"`\", \"contains\", \"in\", \"is\", \"matches\", \"not\", [ \\t\\r\\n], [1-9] or [a-zA-Z]",
+			err:      "1:17 (16): no match found, expected: \"!=\", \"(\", \"-\", \"0\", \"<\", \"<=\", \"==\", \">\", \">=\", \"\\\"\", \"`\", \"contains\", \"false\", \"in\", \"is\", \"matches\", \"not\", \"true\", [ \\t\\r\\n], [1-9] or [a-zA-Z]",
 		},
 		"Float Literal 1": {
 			input:    "foo == 0.2",
-			expected: &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}, Operator: MatchEqual, Value: &MatchValue{Raw: "0.2"}},
+			expected: &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}}, Operator: MatchEqual, Right: &MatchValue{Type: ValueTypeFloat64, Raw: "0.2"}},
 			err:      "",
 		},
 		"Float Literal 2": {
 			input:    "foo == 11.11",
-			expected: &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}, Operator: MatchEqual, Value: &MatchValue{Raw: "11.11"}},
+			expected: &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}}, Operator: MatchEqual, Right: &MatchValue{Type: ValueTypeFloat64, Raw: "11.11"}},
 			err:      "",
 		},
 		"Negative Float": {
 			input:    "foo == -0.2",
-			expected: &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}, Operator: MatchEqual, Value: &MatchValue{Raw: "-0.2"}},
+			expected: &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}}, Operator: MatchEqual, Right: &MatchValue{Type: ValueTypeFloat64, Raw: "-0.2"}},
 			err:      "",
 		},
 		"Unmatched Parentheses": {
@@ -371,24 +371,32 @@ func TestExpressionParsing(t *testing.T) {
 		},
 		"Double Not": {
 			input:    "not not foo == 3",
-			expected: &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}, Operator: MatchEqual, Value: &MatchValue{Raw: "3"}},
+			expected: &MatchExpression{Left: &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}}, Operator: MatchEqual, Right: &MatchValue{Type: ValueTypeInt, Raw: "3"}},
 			err:      "",
 		},
 		"Complex": {
-			input: "(((foo == 3) and (not ((bar in baz) and (not (one != two))))) or (((next is empty) and (not (foo is not empty))) and (bar not in foo)))",
+			input: "(((foo == 3) and (not ((\"bar\" in baz) and (not (one != \"two\"))))) or (((next is empty) and (not (foo is not empty))) and (\"bar\" not in foo)))",
 			expected: &BinaryExpression{
 				Operator: BinaryOpOr,
 				Left: &BinaryExpression{
 					Operator: BinaryOpAnd,
-					Left:     &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}, Operator: MatchEqual, Value: &MatchValue{Raw: "3"}},
+					Left: &MatchExpression{
+						Left:     &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}},
+						Operator: MatchEqual,
+						Right:    &MatchValue{Type: ValueTypeInt, Raw: "3"}},
 					Right: &UnaryExpression{
 						Operator: UnaryOpNot,
 						Operand: &BinaryExpression{
 							Operator: BinaryOpAnd,
-							Left:     &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"baz"}}, Operator: MatchIn, Value: &MatchValue{Raw: "bar"}},
+							Left: &MatchExpression{
+								Left:     &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"baz"}}},
+								Operator: MatchIn,
+								Right:    &MatchValue{Type: ValueTypeString, Raw: "bar"}},
 							Right: &UnaryExpression{
 								Operator: UnaryOpNot,
-								Operand:  &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"one"}}, Operator: MatchNotEqual, Value: &MatchValue{Raw: "two"}},
+								Operand: &MatchExpression{
+									Left:     &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"one"}}},
+									Operator: MatchNotEqual, Right: &MatchValue{Type: ValueTypeString, Raw: "two"}},
 							},
 						},
 					},
@@ -397,13 +405,22 @@ func TestExpressionParsing(t *testing.T) {
 					Operator: BinaryOpAnd,
 					Left: &BinaryExpression{
 						Operator: BinaryOpAnd,
-						Left:     &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"next"}}, Operator: MatchIsEmpty, Value: nil},
+						Left: &MatchExpression{
+							Left:     &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"next"}}},
+							Operator: MatchIsEmpty,
+							Right:    nil},
 						Right: &UnaryExpression{
 							Operator: UnaryOpNot,
-							Operand:  &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}, Operator: MatchIsNotEmpty, Value: nil},
+							Operand: &MatchExpression{
+								Left:     &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}},
+								Operator: MatchIsNotEmpty,
+								Right:    nil},
 						},
 					},
-					Right: &MatchExpression{Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}, Operator: MatchNotIn, Value: &MatchValue{Raw: "bar"}},
+					Right: &MatchExpression{
+						Left:     &MatchValue{Type: ValueTypeReflect, Selector: Selector{Type: SelectorTypeBexpr, Path: []string{"foo"}}},
+						Operator: MatchNotIn,
+						Right:    &MatchValue{Type: ValueTypeString, Raw: "bar"}},
 				},
 			},
 			err: "",
@@ -434,21 +451,21 @@ func BenchmarkExpressionParsing(b *testing.B) {
 	benchmarks := map[string]string{
 		"Equals":                "foo == 3",
 		"Not Equals":            "foo != 3",
-		"In":                    "foo in bar",
-		"Not In":                "foo not in bar",
-		"Contains":              "bar not contains foo",
-		"Not Contains":          "bar not contains foo",
+		"In":                    "\"foo\" in bar",
+		"Not In":                "\"foo\" not in bar",
+		"Contains":              "bar not contains \"foo\"",
+		"Not Contains":          "bar not contains \"foo\"",
 		"Is Empty":              "foo is empty",
 		"Is Not Empty":          "foo is not empty",
-		"Not In Or Equals":      "foo not in bar or bar.foo == 3",
-		"In And Not Equals":     "foo in bar and bar.foo != \"\"",
+		"Not In Or Equals":      "\"foo\" not in bar or bar.foo == 3",
+		"In And Not Equals":     "\"foo\" in bar and bar.foo != \"\"",
 		"Not Equals And Equals": "not (foo == 3 and bar == 4)",
-		"Matches":               "foo matches bar",
-		"Not Matches":           "foo not matches bar",
+		"Matches":               "foo matches \"bar\"",
+		"Not Matches":           "foo not matches \"bar\"",
 		"Big Selectors":         "abcdefghijklmnopqrstuvwxyz.foo.bar.baz.one.two.three.four.five.six.seven.eight.nine.ten == 42",
-		"Many Ors":              "foo == 3 or bar in baz or one != two or next is empty or other is not empty or name == \"\"",
-		"Lots of Ops":           "foo == 3 and not bar in baz and not one != two or next is empty and not foo is not empty and bar not in foo",
-		"Lots of Parens":        "(((foo == 3) and (not ((bar in baz) and (not (one != two))))) or (((next is empty) and (not (foo is not empty))) and (bar not in foo)))",
+		"Many Ors":              "foo == 3 or \"bar\" in baz or one != two or next is empty or other is not empty or name == \"\"",
+		"Lots of Ops":           "foo == 3 and not \"bar\" in baz and not one != two or next is empty and not foo is not empty and \"bar\" not in foo",
+		"Lots of Parens":        "(((foo == 3) and (not ((\"bar\" in baz) and (not (one != two))))) or (((next is empty) and (not (foo is not empty))) and (\"bar\" not in foo)))",
 	}
 	for name, bm := range benchmarks {
 		b.Run(name, func(b *testing.B) {
