@@ -318,6 +318,7 @@ var evaluateTests map[string]expressionTest = map[string]expressionTest{
 			}},
 			{expression: "Nested.Map.foo", result: true, benchQuick: true},
 			{expression: "Nested.Map.zerolen", result: false, benchQuick: true},
+			{expression: "Nested.Map.undef", result: false, benchQuick: true},
 			{expression: "Nested.Map.true", result: true, benchQuick: true},
 			{expression: "Nested.Map.false", result: false, benchQuick: true},
 			{expression: "Nested.Map.foo == \"bar\"", result: true, benchQuick: true},
@@ -618,17 +619,18 @@ func TestCustomTag(t *testing.T) {
 			require.NoError(t, err)
 
 			match, err := expr.Evaluate(ts)
+			value, _ := CoerceBool(match)
 			if tc.jsonTag {
 				if tc.jnameFound {
 					require.NoError(t, err)
-					require.True(t, match.(bool))
+					require.True(t, value)
 				} else {
 					require.True(t, errors.Is(err, pointerstructure.ErrNotFound))
 				}
 			} else {
 				if tc.bnameFound {
 					require.NoError(t, err)
-					require.True(t, match.(bool))
+					require.True(t, value)
 				} else {
 					require.True(t, errors.Is(err, pointerstructure.ErrNotFound))
 				}

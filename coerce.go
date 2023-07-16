@@ -29,7 +29,14 @@ func CoerceUint64(value string) (interface{}, error) {
 // and can be used to convert the raw string value of
 // an expression into a `bool`
 func CoerceBool(value interface{}) (bool, error) {
+	if value == nil {
+		return false, nil
+	}
 	switch v := value.(type) {
+	case UndefinedType:
+		return false, nil
+	case nil:
+		return false, nil
 	case int, int64:
 		return v != 0, nil
 	case float64:

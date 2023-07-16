@@ -428,40 +428,58 @@ func getExprValue(expression *grammar.ExpressionValue, datum interface{}, opt ..
 	case grammar.MathOpPlus:
 		switch rvalue.(type) {
 		case bool:
-			opvalue = lvalue.(bool) && rvalue.(bool)
+			b1, _ := CoerceBool(lvalue)
+			b2, _ := CoerceBool(rvalue)
+			opvalue = b1 && b2
 		case int, int64:
-			opvalue = lvalue.(int64) + rvalue.(int64)
+			b1, _ := CoerceInt64(lvalue)
+			b2, _ := CoerceInt64(rvalue)
+			opvalue = b1 + b2
 		case float64:
-			opvalue = lvalue.(float64) + rvalue.(float64)
+			b1, _ := CoerceFloat64(lvalue)
+			b2, _ := CoerceFloat64(rvalue)
+			opvalue = b1 + b2
 		case string:
-			opvalue = lvalue.(string) + rvalue.(string)
+			opvalue = fmt.Sprintf("%v%v", lvalue, rvalue)
 		default:
 			return nil, fmt.Errorf("unknown types %T for math op", rvalue)
 		}
 	case grammar.MathOpMinus:
 		switch rvalue.(type) {
 		case int, int64:
-			opvalue = lvalue.(int64) - rvalue.(int64)
+			b1, _ := CoerceInt64(lvalue)
+			b2, _ := CoerceInt64(rvalue)
+			opvalue = b1 - b2
 		case float64:
-			opvalue = lvalue.(float64) - rvalue.(float64)
+			b1, _ := CoerceFloat64(lvalue)
+			b2, _ := CoerceFloat64(rvalue)
+			opvalue = b1 - b2
 		default:
 			return nil, fmt.Errorf("unknown types %T for math op", rvalue)
 		}
 	case grammar.MathOpMul:
 		switch rvalue.(type) {
 		case int, int64:
-			opvalue = lvalue.(int64) * rvalue.(int64)
+			b1, _ := CoerceInt64(lvalue)
+			b2, _ := CoerceInt64(rvalue)
+			opvalue = b1 * b2
 		case float64:
-			opvalue = lvalue.(float64) * rvalue.(float64)
+			b1, _ := CoerceFloat64(lvalue)
+			b2, _ := CoerceFloat64(rvalue)
+			opvalue = b1 * b2
 		default:
 			return nil, fmt.Errorf("unknown types %T for math op", rvalue)
 		}
 	case grammar.MathOpDiv:
 		switch rvalue.(type) {
 		case int, int64:
-			opvalue = lvalue.(int64) / rvalue.(int64)
+			b1, _ := CoerceInt64(lvalue)
+			b2, _ := CoerceInt64(rvalue)
+			opvalue = b1 / b2
 		case float64:
-			opvalue = lvalue.(float64) / rvalue.(float64)
+			b1, _ := CoerceFloat64(lvalue)
+			b2, _ := CoerceFloat64(rvalue)
+			opvalue = b1 / b2
 		default:
 			return nil, fmt.Errorf("unknown types %T for math op", rvalue)
 		}
@@ -475,13 +493,15 @@ func evaluate(ast interface{}, datum interface{}, opt ...Option) (interface{}, e
 		switch node.Operator {
 		case grammar.UnaryOpNot:
 			result, err := evaluate(node.Operand, datum, opt...)
-			return !result.(bool), err
+			value, _ := CoerceBool(result)
+			return !value, err
 		}
 	case *grammar.BinaryExpression:
 		switch node.Operator {
 		case grammar.BinaryOpAnd:
 			result, err := evaluate(node.Left, datum, opt...)
-			if err != nil || !result.(bool) {
+			value, _ := CoerceBool(result)
+			if err != nil || !value {
 				return result, err
 			}
 
@@ -489,7 +509,8 @@ func evaluate(ast interface{}, datum interface{}, opt ...Option) (interface{}, e
 
 		case grammar.BinaryOpOr:
 			result, err := evaluate(node.Left, datum, opt...)
-			if err != nil || result.(bool) {
+			value, _ := CoerceBool(result)
+			if err != nil || value {
 				return result, err
 			}
 
