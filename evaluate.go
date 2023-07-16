@@ -53,21 +53,21 @@ func primitiveEqualityFn(value interface{}) func(first interface{}, second inter
 }
 
 func doEqualBool(first interface{}, second interface{}) bool {
-	b1, _ := CoerceBool(fmt.Sprintf("%v", first))
-	b2, _ := CoerceBool(fmt.Sprintf("%v", second))
-	return b1.(bool) == b2.(bool)
+	b1, _ := CoerceBool(first)
+	b2, _ := CoerceBool(second)
+	return b1 == b2
 }
 
 func doEqualInt64(first interface{}, second interface{}) bool {
-	b1, _ := CoerceInt64(fmt.Sprintf("%v", first))
-	b2, _ := CoerceInt64(fmt.Sprintf("%v", second))
-	return b1.(int64) == b2.(int64)
+	b1, _ := CoerceInt64(first)
+	b2, _ := CoerceInt64(second)
+	return b1 == b2
 }
 
 func doEqualFloat64(first interface{}, second interface{}) bool {
-	b1, _ := CoerceFloat64(fmt.Sprintf("%v", first))
-	b2, _ := CoerceFloat64(fmt.Sprintf("%v", second))
-	return b1.(float64) == b2.(float64)
+	b1, _ := CoerceFloat64(first)
+	b2, _ := CoerceFloat64(second)
+	return b1 == b2
 }
 
 func doEqualString(first interface{}, second interface{}) bool {
@@ -92,41 +92,25 @@ func primitiveLowerFn(value interface{}) func(first interface{}, second interfac
 		}*/
 	t := reflect.Indirect(reflect.ValueOf(value))
 	switch t.Kind() {
-	case reflect.Bool:
-		return doLowerBool
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		return doLowerInt64
 	case reflect.Float32, reflect.Float64:
 		return doLowerFloat64
-	case reflect.String:
-		return doLowerString
 	default:
 		return nil
 	}
 }
 
-func doLowerBool(first interface{}, second interface{}) bool {
-	b1, _ := CoerceBool(fmt.Sprintf("%v", first))
-	b2, _ := CoerceBool(fmt.Sprintf("%v", second))
-	return b1.(bool) && !b2.(bool)
-}
-
 func doLowerInt64(first interface{}, second interface{}) bool {
-	b1, _ := CoerceInt64(fmt.Sprintf("%v", first))
-	b2, _ := CoerceInt64(fmt.Sprintf("%v", second))
-	return b1.(int64) < b2.(int64)
+	b1, _ := CoerceInt64(first)
+	b2, _ := CoerceInt64(second)
+	return b1 < b2
 }
 
 func doLowerFloat64(first interface{}, second interface{}) bool {
-	b1, _ := CoerceFloat64(fmt.Sprintf("%v", first))
-	b2, _ := CoerceFloat64(fmt.Sprintf("%v", second))
-	return b1.(float64) < b2.(float64)
-}
-
-func doLowerString(first interface{}, second interface{}) bool {
-	b1 := fmt.Sprintf("%v", first)
-	b2 := fmt.Sprintf("%v", second)
-	return strings.HasPrefix(b2, b1)
+	b1, _ := CoerceFloat64(first)
+	b2, _ := CoerceFloat64(second)
+	return b1 < b2
 }
 
 // Get rid of 0 to many levels of pointers to get at the real type

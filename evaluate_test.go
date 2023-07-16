@@ -250,15 +250,18 @@ var evaluateTests map[string]expressionTest = map[string]expressionTest{
 			{expression: "\"baz\" not in foo", result: false},
 			{expression: "foo is empty", result: false},
 			{expression: "foo is not empty", result: true},
+			{expression: "abc", result: false},
 			{expression: "abc is empty", result: true},
 			{expression: "abc is not empty", result: false},
 			{expression: "\"foo\" in abc", result: false, benchQuick: true},
 			{expression: "\"foo\" not in abc", result: true},
+			{expression: "foo.bar", result: true},
 			{expression: "foo.bar == true", result: true},
 			{expression: "foo.bar == false", result: false},
 			{expression: "foo.baz == false", result: true},
 			{expression: "foo.baz == true", result: false, benchQuick: true},
 			{expression: "foo.bar != true", result: false},
+			{expression: "not foo.bar", result: false},
 			{expression: "foo.bar != false", result: true},
 			{expression: "foo.baz != false", result: false},
 			{expression: "foo.baz != true", result: true},
@@ -269,12 +272,15 @@ var evaluateTests map[string]expressionTest = map[string]expressionTest{
 		testNestedTypes{
 			Nested: testNestedLevel1{
 				Map: map[string]string{
-					"foo":    "bar",
-					"bar":    "baz",
-					"abc":    "123",
-					"colon":  "co:lon",
-					"co:lon": "co:lon",
-					"email":  "foo@example.com",
+					"foo":     "bar",
+					"bar":     "baz",
+					"abc":     "123",
+					"zerolen": "",
+					"true":    "True",
+					"false":   "FALSE",
+					"colon":   "co:lon",
+					"co:lon":  "co:lon",
+					"email":   "foo@example.com",
 				},
 				MapOfStructs: map[string]testNestedLevel2_1{
 					"one": {
@@ -310,6 +316,10 @@ var evaluateTests map[string]expressionTest = map[string]expressionTest{
 				}
 				return v
 			}},
+			{expression: "Nested.Map.foo", result: true, benchQuick: true},
+			{expression: "Nested.Map.zerolen", result: false, benchQuick: true},
+			{expression: "Nested.Map.true", result: true, benchQuick: true},
+			{expression: "Nested.Map.false", result: false, benchQuick: true},
 			{expression: "Nested.Map.foo == \"bar\"", result: true, benchQuick: true},
 			{expression: "Nested.Map.foo contains \"ba\"", result: true, benchQuick: true},
 			{expression: "Nested.Map.foo == \"baz\"", result: false},
@@ -382,7 +392,8 @@ func TestEvaluate(t *testing.T) {
 					} else {
 						require.NoError(t, err)
 					}
-					require.Equal(t, expTest.result, match)
+					value, _ := CoerceBool(match)
+					require.Equal(t, expTest.result, value)
 				})
 			}
 		})
@@ -610,14 +621,14 @@ func TestCustomTag(t *testing.T) {
 			if tc.jsonTag {
 				if tc.jnameFound {
 					require.NoError(t, err)
-					require.True(t, match)
+					require.True(t, match.(bool))
 				} else {
 					require.True(t, errors.Is(err, pointerstructure.ErrNotFound))
 				}
 			} else {
 				if tc.bnameFound {
 					require.NoError(t, err)
-					require.True(t, match)
+					require.True(t, match.(bool))
 				} else {
 					require.True(t, errors.Is(err, pointerstructure.ErrNotFound))
 				}

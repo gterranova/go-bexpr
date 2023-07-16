@@ -51,7 +51,7 @@ func CreateEvaluator(expression string, opts ...Option) (*Evaluator, error) {
 	return eval, nil
 }
 
-func (eval *Evaluator) Evaluate(datum interface{}) (bool, error) {
+func (eval *Evaluator) Evaluate(datum interface{}) (interface{}, error) {
 	opts := []Option{
 		WithTagName(eval.tagName),
 		WithHookFn(eval.valueTransformationHook),
@@ -60,5 +60,5 @@ func (eval *Evaluator) Evaluate(datum interface{}) (bool, error) {
 		opts = append(opts, WithUnknownValue(*eval.unknownVal))
 	}
 	result, err := evaluate(eval.ast, datum, opts...)
-	return result.(bool), err
+	return result, err
 }

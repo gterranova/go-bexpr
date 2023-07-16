@@ -60,8 +60,8 @@ func (f *Filter) Execute(data interface{}) (interface{}, error) {
 			if err != nil {
 				return nil, err
 			}
-
-			if result {
+			value, _ := CoerceBool(result)
+			if value {
 				newSlice = reflect.Append(newSlice, item)
 			}
 		}
@@ -84,7 +84,8 @@ func (f *Filter) Execute(data interface{}) (interface{}, error) {
 				return nil, err
 			}
 
-			if result {
+			value, _ := CoerceBool(result)
+			if value {
 				newMap.SetMapIndex(mapKey, item)
 			}
 		}
