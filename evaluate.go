@@ -92,7 +92,7 @@ func primitiveLowerFn(value interface{}) func(first interface{}, second interfac
 		}*/
 	t := reflect.Indirect(reflect.ValueOf(value))
 	switch t.Kind() {
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+	case reflect.Bool, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		return doLowerInt64
 	case reflect.Float32, reflect.Float64:
 		return doLowerFloat64
@@ -125,7 +125,7 @@ func doMatchMatches(leftValue interface{}, rightValue interface{}) (bool, error)
 	value := reflect.Indirect(reflect.ValueOf(leftValue))
 
 	if !value.Type().ConvertibleTo(byteSliceTyp) {
-		return false, fmt.Errorf("Value of type %s is not convertible to []byte", value.Type())
+		return false, fmt.Errorf("value of type %s is not convertible to []byte", value.Type())
 	}
 
 	var re *regexp.Regexp
@@ -137,7 +137,7 @@ func doMatchMatches(leftValue interface{}, rightValue interface{}) (bool, error)
 	var err error
 	re, err = regexp.Compile(rightValue.(string))
 	if err != nil {
-		return false, fmt.Errorf("Failed to compile regular expression %q: %v", rightValue.(string), err)
+		return false, fmt.Errorf("failed to compile regular expression %q: %v", rightValue.(string), err)
 	}
 	//	expression.Right.Left.Converted = re
 	//}
@@ -224,7 +224,7 @@ func doMatchIn(leftValue interface{}, rightValue interface{}) (bool, error) {
 		return strings.Contains(value.String(), rightValue.(string)), nil
 
 	default:
-		return false, fmt.Errorf("Cannot perform in/contains operations on type %s", kind)
+		return false, fmt.Errorf("cannot perform in/contains operations on type %s", kind)
 	}
 }
 
@@ -336,7 +336,7 @@ func evaluateMatchExpression(expression *grammar.MatchExpression, datum interfac
 		}
 		return false, err
 	default:
-		return false, fmt.Errorf("Invalid match operation: %d", expression.Operator)
+		return false, fmt.Errorf("invalid match operation: %d", expression.Operator)
 	}
 }
 
@@ -344,7 +344,7 @@ func evaluateExpressionValue(expression *grammar.ExpressionValue, datum interfac
 	buf := new(bytes.Buffer)
 	expression.ExpressionDump(buf, "    ", 0)
 	fmt.Println(buf.String())
-	return false, fmt.Errorf("Invalid match operation: %d", expression.Operator)
+	return false, fmt.Errorf("invalid match operation: %d", expression.Operator)
 }
 
 func getValue(expressionValue *grammar.MatchValue, datum interface{}, opt ...Option) (val interface{}, err error) {
@@ -428,58 +428,40 @@ func getExprValue(expression *grammar.ExpressionValue, datum interface{}, opt ..
 	case grammar.MathOpPlus:
 		switch rvalue.(type) {
 		case bool:
-			b1, _ := CoerceBool(lvalue)
-			b2, _ := CoerceBool(rvalue)
-			opvalue = b1 && b2
+			opvalue = lvalue.(bool) && rvalue.(bool)
 		case int, int64:
-			b1, _ := CoerceInt64(lvalue)
-			b2, _ := CoerceInt64(rvalue)
-			opvalue = b1 + b2
+			opvalue = lvalue.(int64) + rvalue.(int64)
 		case float64:
-			b1, _ := CoerceFloat64(lvalue)
-			b2, _ := CoerceFloat64(rvalue)
-			opvalue = b1 + b2
+			opvalue = lvalue.(float64) + rvalue.(float64)
 		case string:
-			opvalue = fmt.Sprintf("%v%v", lvalue, rvalue)
+			opvalue = lvalue.(string) + rvalue.(string)
 		default:
 			return nil, fmt.Errorf("unknown types %T for math op", rvalue)
 		}
 	case grammar.MathOpMinus:
 		switch rvalue.(type) {
 		case int, int64:
-			b1, _ := CoerceInt64(lvalue)
-			b2, _ := CoerceInt64(rvalue)
-			opvalue = b1 - b2
+			opvalue = lvalue.(int64) - rvalue.(int64)
 		case float64:
-			b1, _ := CoerceFloat64(lvalue)
-			b2, _ := CoerceFloat64(rvalue)
-			opvalue = b1 - b2
+			opvalue = lvalue.(float64) - rvalue.(float64)
 		default:
 			return nil, fmt.Errorf("unknown types %T for math op", rvalue)
 		}
 	case grammar.MathOpMul:
 		switch rvalue.(type) {
 		case int, int64:
-			b1, _ := CoerceInt64(lvalue)
-			b2, _ := CoerceInt64(rvalue)
-			opvalue = b1 * b2
+			opvalue = lvalue.(int64) * rvalue.(int64)
 		case float64:
-			b1, _ := CoerceFloat64(lvalue)
-			b2, _ := CoerceFloat64(rvalue)
-			opvalue = b1 * b2
+			opvalue = lvalue.(float64) * rvalue.(float64)
 		default:
 			return nil, fmt.Errorf("unknown types %T for math op", rvalue)
 		}
 	case grammar.MathOpDiv:
 		switch rvalue.(type) {
 		case int, int64:
-			b1, _ := CoerceInt64(lvalue)
-			b2, _ := CoerceInt64(rvalue)
-			opvalue = b1 / b2
+			opvalue = lvalue.(int64) / rvalue.(int64)
 		case float64:
-			b1, _ := CoerceFloat64(lvalue)
-			b2, _ := CoerceFloat64(rvalue)
-			opvalue = b1 / b2
+			opvalue = lvalue.(float64) / rvalue.(float64)
 		default:
 			return nil, fmt.Errorf("unknown types %T for math op", rvalue)
 		}
@@ -487,42 +469,43 @@ func getExprValue(expression *grammar.ExpressionValue, datum interface{}, opt ..
 	return opvalue, nil
 }
 
-func evaluate(ast interface{}, datum interface{}, opt ...Option) (interface{}, error) {
+func evaluate(ast interface{}, datum interface{}, opt ...Option) (result interface{}, err error) {
 	switch node := ast.(type) {
 	case *grammar.UnaryExpression:
 		switch node.Operator {
 		case grammar.UnaryOpNot:
-			result, err := evaluate(node.Operand, datum, opt...)
-			value, _ := CoerceBool(result)
-			return !value, err
+			result, err = evaluate(node.Operand, datum, opt...)
+			return !result.(bool), err
 		}
 	case *grammar.BinaryExpression:
 		switch node.Operator {
 		case grammar.BinaryOpAnd:
-			result, err := evaluate(node.Left, datum, opt...)
-			value, _ := CoerceBool(result)
-			if err != nil || !value {
+			result, err = evaluate(node.Left, datum, opt...)
+			if err != nil || !result.(bool) {
 				return result, err
 			}
 
 			return evaluate(node.Right, datum, opt...)
 
 		case grammar.BinaryOpOr:
-			result, err := evaluate(node.Left, datum, opt...)
-			value, _ := CoerceBool(result)
-			if err != nil || value {
+			result, err = evaluate(node.Left, datum, opt...)
+			if err != nil || result.(bool) {
 				return result, err
 			}
 
 			return evaluate(node.Right, datum, opt...)
 		}
 	case *grammar.MatchExpression:
-		return evaluateMatchExpression(node, datum, opt...)
+		result, err = evaluateMatchExpression(node, datum, opt...)
 	case *grammar.ExpressionValue:
-		return getExprValue(node, datum, opt...)
+		result, err = getExprValue(node, datum, opt...)
 	case *grammar.MatchValue:
-		return getValue(node, datum, opt...)
-
+		result, err = getValue(node, datum, opt...)
+	default:
+		return false, fmt.Errorf("invalid AST node")
 	}
-	return false, fmt.Errorf("Invalid AST node")
+	if isUndefined(result) {
+		return false, err
+	}
+	return result, err
 }
